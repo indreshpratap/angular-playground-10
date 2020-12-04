@@ -1,6 +1,6 @@
 <div #container class="ddwl-container">
   <div class="ddwl-header" *ngIf="filter">
-    <div class="p-multiselect-filter-container" >
+    <div class="p-multiselect-filter-container">
       <input #filterInput type="text" role="textbox" [value]="filterValue||''" (input)="onFilter($event)"
         class="p-multiselect-filter p-inputtext p-component" [disabled]="disabled"
         [attr.placeholder]="filterPlaceHolder">
@@ -12,6 +12,8 @@
   </div>
   <div #itemWrapper class="p-multiselect-items-wrapper" [style.max-height]="scrollHeight||'auto'">
     <ul class="p-multiselect-items p-component" role="listbox" aria-multiselectable="true">
+      <ddwl-select-item *ngIf="selectAllOption" [multi]="multi" [option]="selectAllOption" [selected]="allSelected"
+        [label]="selectAllOption.label" (optClick)="selectAllClick($event)"></ddwl-select-item>
       <ng-template ngFor let-option let-i="index" [ngForOf]="optionsToRender">
         <ddwl-select-item [multi]="multi" [option]="option" [selected]="isSelected(option.value)" [label]="option.label"
           (optClick)="onOptionClick($event)"></ddwl-select-item>

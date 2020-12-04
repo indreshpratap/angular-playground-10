@@ -6,22 +6,23 @@ import {
   HostListener,
   Input,
   OnInit,
-  Output
-} from "@angular/core";
-import { InputDropdownComponent } from "./input-dropdown.component";
+  Output,
+} from '@angular/core';
+import { InputDropdownComponent } from './input-dropdown.component';
 
 @Component({
-  selector: "rfo-multi-ddwl",
-  templateUrl: "./rfo-multi-ddwl.component.html",
-  styleUrls: ["./rfo-multi-ddwl.component.scss"]
+  selector: 'rfo-multi-ddwl',
+  templateUrl: './rfo-multi-ddwl.component.html',
+  styleUrls: ['./rfo-multi-ddwl.component.scss'],
 })
 export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
-   @Input() ddwlRef: InputDropdownComponent;
+  @Input() ddwlRef: InputDropdownComponent;
   ddwlData = {};
   valuesAsString = null;
   @Input() value = null;
+  @Input() defaultValue = null;
   @Input() options = [];
-  @Input() allowClear =false;
+  @Input() allowClear = false;
 
   @Input() row: any;
   @Input() rule: any;
@@ -37,23 +38,27 @@ export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
     this.updateLabel();
   }
 
-  @HostListener("click")
+  @HostListener('click')
   clickListener() {
     const re = this.el.nativeElement.getBoundingClientRect();
     setTimeout(() => {
-      this.ddwlData = { options: this.options, value: this.value };
+      this.ddwlData = {
+        options: this.options,
+        value: this.value,
+        defaultValue: this.defaultValue,
+      };
       this.ddwlRef.show(re, this.ddwlData, this.onChangeCallback);
     }, 100);
   }
 
-  clearSelection($event:MouseEvent){
+  clearSelection($event: MouseEvent) {
     $event.stopPropagation();
     this.value = null;
-    this.valuesAsString=null;
+    this.valuesAsString = null;
     this.selChange.emit(this.value);
   }
 
-  onChangeCallback = event => {
+  onChangeCallback = (event) => {
     this.value = event.value;
     this.updateLabel();
     this.selChange.emit(this.value);
@@ -61,12 +66,12 @@ export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
 
   updateLabel() {
     if (this.value && this.options && this.value.length) {
-      let label = "";
+      let label = '';
       for (let i = 0; i < this.value.length; i++) {
         const itemLabel = this.findLabelByValue(this.value[i]);
         if (itemLabel) {
           if (label.length > 0) {
-            label = label + ", ";
+            label = label + ', ';
           }
           label = label + itemLabel;
         }
@@ -74,7 +79,7 @@ export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
 
       this.valuesAsString = label;
     } else {
-      this.valuesAsString = this.placeholder || "Choose";
+      this.valuesAsString = this.placeholder || 'Choose';
     }
   }
 

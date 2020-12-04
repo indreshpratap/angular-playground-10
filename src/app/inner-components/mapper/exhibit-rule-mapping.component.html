@@ -23,11 +23,12 @@
 						<tr *ngFor="let rule of row.exhibitResponseRuleMappings;let ruleIndex =index">
 							<td class="wd-200x">
 								<span *ngIf="ruleIndex===0">
-                  <rfo-multi-ddwl [options]="resDdwlList" 
-                  (selChange)="handleResChange($event,row,rowIndex)" 
-                  [value]="row.exhibitMappingValues|valueExtract:'name':true"
-                   [ddwlRef]="resListDropdown" [key]="'name'" [row]="row"></rfo-multi-ddwl>
-                </span>
+									<rfo-multi-ddwl [options]="resDdwlList"
+										(selChange)="handleResChange($event,row,rowIndex)"
+										[value]="row.exhibitMappingValues|valueExtract:'name':true"
+										[defaultValue]="row.defaultRes" [ddwlRef]="resListDropdown" [key]="'name'"
+										[row]="row"></rfo-multi-ddwl>
+								</span>
 							</td>
 							<td class="wd-200x">
 								<rfo-multi-ddwl [options]="ruleTypeList"
@@ -57,7 +58,8 @@
 									</div>
 									<div>
 										<!-- <span (click)="deleteRule(row,ruleIndex)" class="pi pi-times"></span> -->
-										<span (click)="deleteRule(row,ruleIndex)" class="rfo-admin rfo-admin-delete"></span>
+										<span (click)="deleteRule(row,ruleIndex)"
+											class="rfo-admin rfo-admin-delete"></span>
 									</div>
 								</div>
 							</td>
@@ -66,7 +68,7 @@
 					</table>
 
 					<div style="text-align: right;">
-						<span (click)="addNewRule(row)">Add  Rule</span>
+						<span (click)="addNewRule(row)">Add Rule</span>
 
 					</div>
 				</td>
@@ -76,9 +78,11 @@
 	</table>
 	<!-- </ng-template> 
 		</p-table>-->
-	<input-dropdown #productDropdown [options]="productList" [filter]="true"></input-dropdown>
+	<input-dropdown #productDropdown [selectAllOption]="{value:-1,label:'All Product Selected'}" [options]="productList"
+		[filter]="true"></input-dropdown>
 	<input-dropdown #logicDropdown [multi]="false" [filter]="false" [options]="logicList"></input-dropdown>
 	<input-dropdown #ruleTypeDropdown [multi]="false" [filter]="false" [options]="ruleTypeList">
 	</input-dropdown>
-	<input-dropdown #resListDropdown [multi]="true" [filter]="true" [options]="resDdwlList"></input-dropdown>
+	<input-dropdown #resListDropdown [multi]="true" [defaultDisable]="true" [filter]="true" [options]="resDdwlList">
+	</input-dropdown>
 </div>

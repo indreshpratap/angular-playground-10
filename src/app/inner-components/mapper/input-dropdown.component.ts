@@ -10,12 +10,12 @@ import {
   Output,
   Renderer2,
   ViewChild,
-  ViewEncapsulation
-} from "@angular/core";
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
+  ViewEncapsulation,
+} from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: "ddwl-select-item",
+  selector: 'ddwl-select-item',
   template: `
     <li
       class="p-multiselect-item"
@@ -36,7 +36,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
       </div>
     </li>
   `,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class DdwlSelectItem {
   @Input() option: any;
@@ -55,36 +55,39 @@ export class DdwlSelectItem {
   onOptClick(event: Event) {
     this.optClick.emit({
       originalEvent: event,
-      option: this.option
+      option: this.option,
     });
   }
 }
 
 @Component({
-  selector: "input-dropdown",
-  templateUrl: "./input-dropdown.component.html",
-  styleUrls: ["./input-dropdown.component.scss"],
+  selector: 'input-dropdown',
+  templateUrl: './input-dropdown.component.html',
+  styleUrls: ['./input-dropdown.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => InputDropdownComponent),
-      multi: true
-    }
+      multi: true,
+    },
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class InputDropdownComponent implements OnInit, ControlValueAccessor {
   @Input() disabled;
   @Input() options;
+  @Input() defaultDisable = false;
+  @Input() selectAllOption = null;
   @Input() filter = false;
-  @Input() filterPlaceHolder = "Search";
-  @Input() scrollHeight = 200;
+  @Input() filterPlaceHolder = 'Search';
+  @Input() scrollHeight = 180;
   @Input() multi = true;
   @Output() onChange: EventEmitter<any> = new EventEmitter();
   @Output() close: EventEmitter<any> = new EventEmitter();
-  @ViewChild("container") container: ElementRef;
-  @ViewChild("itemWrapper") itemWrapper: ElementRef;
+
+  @ViewChild('container') container: ElementRef;
+  @ViewChild('itemWrapper') itemWrapper: ElementRef;
 
   public value: any[];
   scrollHandler: any;
@@ -94,14 +97,18 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
   valuesAsString;
   placeholder;
   defaultLabel;
+  allSelected = null;
   documentClickListener;
   onChangeReceiver;
   ddwlData;
+
   constructor(
     public el: ElementRef,
     public renderer: Renderer2,
     public cd: ChangeDetectorRef
   ) {}
+
+  ngOnInit() {}
 
   show(re, ddwlData, onChangeReceiver) {
     this.filterValue = null;
@@ -113,8 +120,8 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     this.ddwlData = ddwlData;
     this.onChangeReceiver = onChangeReceiver;
     const elm = this.container.nativeElement;
-    setTimeout(()=>{
-    this.itemWrapper.nativeElement.scrollTop = 0;
+    setTimeout(() => {
+      this.itemWrapper.nativeElement.scrollTop = 0;
     });
 
     const height = re.height;
@@ -122,14 +129,14 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     const x = re.left;
     const y = re.top + height;
     elm.style.transform = `translate3d(${x}px,${y}px,0px)`;
-    elm.style.width = re.width + "px";
-    elm.style.display = "block";
+    elm.style.width = re.width + 'px';
+    elm.style.display = 'block';
     this.bindDocumentClickListener();
     this.bindScrollListener();
     this.cd.markForCheck();
   }
   hide() {
-    this.container.nativeElement.style.display = "none";
+    this.container.nativeElement.style.display = 'none';
     this.close.emit();
     this.unbindDocumentClickListener();
     this.unbindScrollListener();
@@ -200,7 +207,7 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     if (
       filter === undefined ||
       filter === null ||
-      (typeof filter === "string" && filter.trim() === "")
+      (typeof filter === 'string' && filter.trim() === '')
     ) {
       return true;
     }
@@ -215,7 +222,7 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     return stringValue.indexOf(filterValue) !== -1;
   }
   isSelected(value) {
-    return this.findSelectionIndex(value) !== -1;
+    return this.allSelected !== null || this.findSelectionIndex(value) !== -1;
   }
   findSelectionIndex(val: any): number {
     let index = -1;
@@ -232,6 +239,29 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     return index;
   }
 
+  selectAllClick(event) {
+    let optionValue = this.selectAllOption.value;
+    if (optionValue === this.allSelected) {
+      this.allSelected = optionValue;
+      this.value = [optionValue];
+      this.valuesAsString = 'All';
+    } else {
+      this.allSelected = null;
+      this.valuesAsString = null;
+      this.value = null;
+      optionValue = null; // setting null for event trigger
+    }
+
+    const ev = {
+      originalEvent: event.originalEvent,
+      value: this.value,
+      itemValue: optionValue,
+      labelValue: this.valuesAsString,
+    };
+
+    // this.onChange.emit(ev);
+    this.onChangeReceiver(ev);
+  }
   onOptionClick(event) {
     const option = event.option;
     // if (this.isOptionDisabled(option)) {
@@ -239,6 +269,14 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     // }
 
     const optionValue = option.value;
+    // Default value check
+    if (
+      this.defaultDisable &&
+      this.ddwlData.defaultValue &&
+      this.ddwlData.defaultValue === optionValue
+    ) {
+      return false;
+    }
     if (this.multi) {
       const selectionIndex = this.findSelectionIndex(optionValue);
       if (selectionIndex !== -1) {
@@ -257,7 +295,7 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
       originalEvent: event.originalEvent,
       value: this.value,
       itemValue: optionValue,
-      labelValue: this.valuesAsString
+      labelValue: this.valuesAsString,
     };
 
     // this.onChange.emit(ev);
@@ -276,12 +314,12 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
 
   updateLabel() {
     if (this.value && this.options && this.value.length) {
-      let label = "";
+      let label = '';
       for (let i = 0; i < this.value.length; i++) {
         let itemLabel = this.findLabelByValue(this.value[i]);
         if (itemLabel) {
           if (label.length > 0) {
-            label = label + ", ";
+            label = label + ', ';
           }
           label = label + itemLabel;
         }
@@ -324,42 +362,40 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
-  ngOnInit() {}
-
   public onModelChange: Function = () => {};
 
   public onModelTouched: Function = () => {};
 
   bindScrollListener() {
     setTimeout(() => {
-      window.addEventListener("scroll", this.onScroll, true);
+      window.addEventListener('scroll', this.onScroll, true);
     }, 300);
   }
 
-  onScroll = ev => {
+  onScroll = (ev) => {
     if (
       !ev.target.className ||
-      ev.target.className !== "p-multiselect-items-wrapper"
+      ev.target.className !== 'p-multiselect-items-wrapper'
     ) {
       this.hide();
     }
   };
 
   unbindScrollListener() {
-    window.removeEventListener("scroll", this.onScroll, true);
+    window.removeEventListener('scroll', this.onScroll, true);
   }
   bindDocumentClickListener() {
     setTimeout(() => {
-      console.log("bind window click");
+      console.log('bind window click');
       if (!this.documentClickListener) {
         const documentTarget: any = this.el
           ? this.el.nativeElement.ownerDocument
-          : "document";
+          : 'document';
 
         this.documentClickListener = this.renderer.listen(
           documentTarget,
-          "click",
-          event => {
+          'click',
+          (event) => {
             if (this.isOutsideClicked(event)) {
               this.hide();
             }

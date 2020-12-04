@@ -1,0 +1,22 @@
+<div #container class="ddwl-container">
+  <div class="ddwl-header" *ngIf="filter">
+    <div class="p-multiselect-filter-container" >
+      <input #filterInput type="text" role="textbox" [value]="filterValue||''" (input)="onFilter($event)"
+        class="p-multiselect-filter p-inputtext p-component" [disabled]="disabled"
+        [attr.placeholder]="filterPlaceHolder">
+      <span class="p-multiselect-filter-icon pi pi-search"></span>
+    </div>
+    <!-- <a class="p-multiselect-close p-link" type="button" (click)="closeIt($event)" pRipple>
+      <span class="p-multiselect-close-icon pi pi-times"></span>
+    </a> -->
+  </div>
+  <div #itemWrapper class="p-multiselect-items-wrapper" [style.max-height]="scrollHeight||'auto'">
+    <ul class="p-multiselect-items p-component" role="listbox" aria-multiselectable="true">
+      <ng-template ngFor let-option let-i="index" [ngForOf]="optionsToRender">
+        <ddwl-select-item [multi]="multi" [option]="option" [selected]="isSelected(option.value)" [label]="option.label"
+          (optClick)="onOptionClick($event)"></ddwl-select-item>
+      </ng-template>
+      <!-- <li *ngIf="emptyOptions" class="p-multiselect-empty-message">{{emptyFilterMessage}}</li> -->
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,7 @@
+<div class="rfo-ddwl">
+  <span class="value-str">{{valuesAsString? valuesAsString:'Select' }}</span>
+  <div class=" ui-multiselect-trigger ui-state-default ui-corner-right">
+    <span class="pi pi-times" *ngIf="allowClear && valuesAsString" (click)="clearSelection($event)"></span>
+    <span class="ui-multiselect-trigger-icon ui-clickable pi pi-angle-down"></span>
+  </div>
+</div>

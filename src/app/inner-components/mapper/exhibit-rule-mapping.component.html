@@ -1,0 +1,84 @@
+<div style="height:200px">
+	<h3 class="gr-heading">Product Specific Mapping</h3>
+	<h3 class="gr-heading">Guidance:</h3>
+	<!-- <p-table *ngIf="mappedData.exhibitResponseRules?.length > 0" [value]="mappedData.exhibitResponseRules"
+		[scrollable]="true" scrollHeight="160px"> -->
+	<table>
+		<thead>
+			<!-- <ng-template pTemplate="header"> -->
+			<tr>
+				<th class="wd-200x">Response</th>
+				<th class="wd-200x">Rule</th>
+				<th class="wd-200x">Product(s)</th>
+				<th class="wd-200x">Logic</th>
+				<th class="wd-200x">Product(s)</th>
+			</tr>
+		</thead>
+		<tbody>
+			<!-- </ng-template>
+		<ng-template pTemplate="body" let-row let-rowIndex="rowIndex"> -->
+			<tr *ngFor="let row of mappedData.exhibitResponseRules;let rowIndex=index">
+				<td>
+					<table>
+						<tr *ngFor="let rule of row.exhibitResponseRuleMappings;let ruleIndex =index">
+							<td class="wd-200x">
+								<span *ngIf="ruleIndex===0">
+                  <rfo-multi-ddwl [options]="resDdwlList" 
+                  (selChange)="handleResChange($event,row,rowIndex)" 
+                  [value]="row.exhibitMappingValues|valueExtract:'name':true"
+                   [ddwlRef]="resListDropdown" [key]="'name'" [row]="row"></rfo-multi-ddwl>
+                </span>
+							</td>
+							<td class="wd-200x">
+								<rfo-multi-ddwl [options]="ruleTypeList"
+									(selChange)="handleRuleTypeChange($event,rule,row.exhibitMappingValues)"
+									[value]="rule.exhibitResponseRuleId?[rule.exhibitResponseRuleId]:null" [row]="row"
+									[rule]="rule" [ddwlRef]="ruleTypeDropdown"></rfo-multi-ddwl>
+							</td>
+							<td class="wd-200x">
+								<rfo-multi-ddwl [options]="productList"
+									[value]="rule.productRuleMappings1|valueExtract:'productId':false"
+									(selChange)="handleProduct1Change($event,rule,row)" [ddwlRef]="productDropdown">
+								</rfo-multi-ddwl>
+							</td>
+							<td class="wd-200x">
+								<rfo-multi-ddwl [options]="logicList" [allowClear]="true"
+									(selChange)="handleLogicChange($event,rule,row)"
+									[value]="rule.exhibitResponseLogicId?[rule.exhibitResponseLogicId]:null"
+									[ddwlRef]="logicDropdown"></rfo-multi-ddwl>
+							</td>
+							<td class="wd-200x">
+								<div class="last-row-wrap">
+									<div class="last-row">
+										<rfo-multi-ddwl [ddwlRef]="productDropdown" [allowClear]="true"
+											[options]="productList" (selChange)="handleProduct2Change($event,rule,row)"
+											[value]="rule.productRuleMappings2|valueExtract:'productId':false">
+										</rfo-multi-ddwl>
+									</div>
+									<div>
+										<!-- <span (click)="deleteRule(row,ruleIndex)" class="pi pi-times"></span> -->
+										<span (click)="deleteRule(row,ruleIndex)" class="rfo-admin rfo-admin-delete"></span>
+									</div>
+								</div>
+							</td>
+
+						</tr>
+					</table>
+
+					<div style="text-align: right;">
+						<span (click)="addNewRule(row)">Add  Rule</span>
+
+					</div>
+				</td>
+
+			</tr>
+		</tbody>
+	</table>
+	<!-- </ng-template> 
+		</p-table>-->
+	<input-dropdown #productDropdown [options]="productList" [filter]="true"></input-dropdown>
+	<input-dropdown #logicDropdown [multi]="false" [filter]="false" [options]="logicList"></input-dropdown>
+	<input-dropdown #ruleTypeDropdown [multi]="false" [filter]="false" [options]="ruleTypeList">
+	</input-dropdown>
+	<input-dropdown #resListDropdown [multi]="true" [filter]="true" [options]="resDdwlList"></input-dropdown>
+</div>

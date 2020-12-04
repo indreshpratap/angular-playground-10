@@ -1,0 +1,23 @@
+.gr-heading {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+td {
+  vertical-align: top;
+}
+
+th {
+  font-size: 11px;
+}
+
+.wd-200x {
+    width:200px;
+}
+
+.last-row-wrap {
+    display: flex;
+    .last-row{
+        width:170px;
+    }
+}

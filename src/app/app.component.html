@@ -1,9 +1,10 @@
 <ul>
 	<li *ngFor="let map of mappedData.mappingValueList;let ind=index">
-    <input type="text" [(ngModel)]="map.id" (blur)="mapper.checkResUpdate(ind)">
-    <span class="pi pi-times-circle" (click)="mapper.checkResDelete(ind)"></span>
-  </li>
+		<input type="text" [(ngModel)]="map.id" (blur)="mapper.checkResUpdate(ind)">
+		<span class="pi pi-times-circle" (click)="remove(ind)"></span>
+	</li>
 
-  <span class="pi pi-plus" (click)="add()"></span>
+	<span class="pi pi-plus" (click)="add()"></span>
+	<button (click)="saveCheck()">Save check</button>
 </ul>
 <exhibit-rule-mapping #mapper [productList]="productList" [mappedData]="mappedData"></exhibit-rule-mapping>

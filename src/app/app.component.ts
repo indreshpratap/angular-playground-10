@@ -1,4 +1,4 @@
-import { Component, VERSION } from "@angular/core";
+import { Component, ViewChild } from "@angular/core";
 
 @Component({
   selector: "my-app",
@@ -6,6 +6,7 @@ import { Component, VERSION } from "@angular/core";
   styleUrls: ["./app.component.css"]
 })
 export class AppComponent {
+  @ViewChild('mapper') mapper;
   mappedData = {
     mappingValueList: [
       { id: "res", name: "res"  },
@@ -15,6 +16,7 @@ export class AppComponent {
       { id: "inr", name: "inr"  },
       { id: "sig", name: "sig"  }
     ],
+    exhibitResponseRules:[]
     // exhibitResponseRules: [
     //   {
     //     deleted: false,
@@ -155,5 +157,14 @@ export class AppComponent {
 
   add() {
     this.mappedData.mappingValueList.push({ id: null,name:null });
+  }
+
+  remove(index){
+    this.mappedData.mappingValueList.splice(index,1);
+    this.mapper.checkResDelete(index);
+  }
+
+  saveCheck(){
+    console.log(JSON.stringify(this.mappedData.exhibitResponseRules));
   }
 }

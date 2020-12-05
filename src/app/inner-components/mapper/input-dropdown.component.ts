@@ -10,12 +10,12 @@ import {
   Output,
   Renderer2,
   ViewChild,
-  ViewEncapsulation,
-} from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+  ViewEncapsulation
+} from "@angular/core";
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 
 @Component({
-  selector: 'ddwl-select-item',
+  selector: "ddwl-select-item",
   template: `
     <li
       class="p-multiselect-item"
@@ -36,7 +36,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       </div>
     </li>
   `,
-  encapsulation: ViewEncapsulation.None,
+  encapsulation: ViewEncapsulation.None
 })
 export class DdwlSelectItem {
   @Input() option: any;
@@ -55,48 +55,41 @@ export class DdwlSelectItem {
   onOptClick(event: Event) {
     this.optClick.emit({
       originalEvent: event,
-      option: this.option,
+      option: this.option
     });
   }
 }
 
 @Component({
-  selector: 'input-dropdown',
-  templateUrl: './input-dropdown.component.html',
-  styleUrls: ['./input-dropdown.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => InputDropdownComponent),
-      multi: true,
-    },
-  ],
+  selector: "input-dropdown",
+  templateUrl: "./input-dropdown.component.html",
+  styleUrls: ["./input-dropdown.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
+  encapsulation: ViewEncapsulation.None
 })
-export class InputDropdownComponent implements OnInit, ControlValueAccessor {
+export class InputDropdownComponent implements OnInit {
   @Input() disabled;
   @Input() options;
+  @Input() overrideOptions = false;
   @Input() defaultDisable = false;
   @Input() selectAllOption = null;
   @Input() filter = false;
-  @Input() filterPlaceHolder = 'Search';
+  @Input() filterPlaceHolder = "Search";
   @Input() scrollHeight = 180;
   @Input() multi = true;
   @Output() onChange: EventEmitter<any> = new EventEmitter();
   @Output() close: EventEmitter<any> = new EventEmitter();
 
-  @ViewChild('container') container: ElementRef;
-  @ViewChild('itemWrapper') itemWrapper: ElementRef;
+  @ViewChild("container") container: ElementRef;
+  @ViewChild("itemWrapper") itemWrapper: ElementRef;
 
   public value: any[];
+
   scrollHandler: any;
-  filled = false;
+  // filled = false;
   public _filteredOptions: any[];
   filterValue;
-  valuesAsString;
   placeholder;
-  defaultLabel;
   allSelected = null;
   documentClickListener;
   onChangeReceiver;
@@ -112,31 +105,66 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
 
   show(re, ddwlData, onChangeReceiver) {
     this.filterValue = null;
+    if (this.overrideOptions) {
+     // console.log(ddwlData.options);
+      this.options = ddwlData.options;
+    }
     this.filterOptions();
     //  console.log(re);
     if (ddwlData.value) {
       this.value = ddwlData.value;
+      this.checkForSelectAll();
     }
+
     this.ddwlData = ddwlData;
     this.onChangeReceiver = onChangeReceiver;
-    const elm = this.container.nativeElement;
     setTimeout(() => {
       this.itemWrapper.nativeElement.scrollTop = 0;
     });
-
-    const height = re.height;
-
-    const x = re.left;
-    const y = re.top + height;
-    elm.style.transform = `translate3d(${x}px,${y}px,0px)`;
-    elm.style.width = re.width + 'px';
-    elm.style.display = 'block';
+    this.calcAndSetPosition(re);
     this.bindDocumentClickListener();
     this.bindScrollListener();
     this.cd.markForCheck();
   }
+
+  calcAndSetPosition(re) {
+    // debugger;
+    const elm = this.container.nativeElement;
+    elm.style.visibility = "hidden";
+
+    const height = re.height;
+    const x = re.left;
+    let y = re.top + height;
+
+    elm.style.transform = `translate3d(${x}px,${y}px,0px)`;
+    elm.style.width = re.width + "px";
+    elm.style.display = "block";
+    setTimeout(() => {
+      const cHeight = elm.clientHeight;
+      const bottomDistance = window.innerHeight - re.bottom;
+      console.log(cHeight, bottomDistance, y);
+      if (bottomDistance < cHeight) {
+        y = y - cHeight - height;
+        elm.style.transform = `translate3d(${x}px,${y}px,0px)`;
+      }
+      elm.style.visibility = "visible";
+    });
+  }
+
+  checkForSelectAll() {
+    if (
+      this.selectAllOption &&
+      this.value &&
+      this.value[0] === this.selectAllOption.value
+    ) {
+      this.allSelected = this.value[0];
+    } else {
+      this.allSelected = null;
+    }
+  }
+
   hide() {
-    this.container.nativeElement.style.display = 'none';
+    this.container.nativeElement.style.display = "none";
     this.close.emit();
     this.unbindDocumentClickListener();
     this.unbindScrollListener();
@@ -171,9 +199,14 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
   get optionsToRender(): any[] {
     return this._filteredOptions || this.options;
   }
+
+  get optionsValueOnly() {
+    return this.optionsToRender.map(m => m.value);
+  }
+
   // _filterValue;
   onFilter(event) {
-    this.filterValue = (<HTMLInputElement>event.target).value;
+    this.filterValue = event.target.value;
     this.filterOptions();
   }
 
@@ -207,7 +240,7 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     if (
       filter === undefined ||
       filter === null ||
-      (typeof filter === 'string' && filter.trim() === '')
+      (typeof filter === "string" && filter.trim() === "")
     ) {
       return true;
     }
@@ -241,22 +274,22 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
 
   selectAllClick(event) {
     let optionValue = this.selectAllOption.value;
+    //debugger;
     if (optionValue === this.allSelected) {
-      this.allSelected = optionValue;
-      this.value = [optionValue];
-      this.valuesAsString = 'All';
-    } else {
       this.allSelected = null;
-      this.valuesAsString = null;
       this.value = null;
       optionValue = null; // setting null for event trigger
+    } else {
+      this.allSelected = optionValue;
+      this.value = [optionValue];
+      //this.valuesAsString = "All";
     }
 
     const ev = {
       originalEvent: event.originalEvent,
       value: this.value,
       itemValue: optionValue,
-      labelValue: this.valuesAsString,
+      selectAll: this.allSelected !== null
     };
 
     // this.onChange.emit(ev);
@@ -269,6 +302,13 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
     // }
 
     const optionValue = option.value;
+    if (this.selectAllOption && this.allSelected !== null) {
+      this.value = this.optionsValueOnly.filter(f => f !== optionValue);
+      this.triggerSelChange(event, false);
+      this.allSelected = null;
+      this.cd.markForCheck();
+      return;
+    }
     // Default value check
     if (
       this.defaultDisable &&
@@ -288,63 +328,45 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
       this.value = [optionValue];
     }
 
-    this.onModelChange(this.value);
-    this.updateLabel();
-    this.updateFilledState();
+    this.doCheckForSelectAll(event);
+
+    if (!this.multi) {
+      this.hide();
+    }
+  }
+
+  triggerSelChange(event, allSelected) {
     const ev = {
       originalEvent: event.originalEvent,
       value: this.value,
-      itemValue: optionValue,
-      labelValue: this.valuesAsString,
+      selectAll: allSelected
+      //itemValue: optionValue
     };
 
     // this.onChange.emit(ev);
     this.onChangeReceiver(ev);
-    if (!this.multi) {
-      this.hide();
+  }
+
+  doCheckForSelectAll(event) {
+    if (
+      this.selectAllOption &&
+      this.value.length === this.optionsToRender.length
+    ) {
+      const all = this.optionsValueOnly.every(
+        v => this.value.indexOf(v) !== -1
+      );
+      if (all) {
+        this.selectAllClick(event);
+        return;
+      }
     }
-    // this.cd.markForCheck();
+    this.triggerSelChange(event, false);
+    this.cd.markForCheck();
   }
 
   searchOptions() {}
 
-  updateFilledState() {
-    this.filled = this.value && this.value.length > 0;
-  }
-
-  updateLabel() {
-    if (this.value && this.options && this.value.length) {
-      let label = '';
-      for (let i = 0; i < this.value.length; i++) {
-        let itemLabel = this.findLabelByValue(this.value[i]);
-        if (itemLabel) {
-          if (label.length > 0) {
-            label = label + ', ';
-          }
-          label = label + itemLabel;
-        }
-      }
-
-      this.valuesAsString = label;
-    } else {
-      this.valuesAsString = this.placeholder || this.defaultLabel;
-    }
-  }
-
-  findLabelByValue(val: any): string {
-    let label = null;
-    for (let i = 0; i < this.options.length; i++) {
-      let option = this.options[i];
-      let optionValue = option.value;
-
-      if (val === optionValue) {
-        label = option.label;
-        break;
-      }
-    }
-    return label;
-  }
-
+  /*
   writeValue(value: any): void {
     this.value = value;
     this.updateLabel();
@@ -365,37 +387,38 @@ export class InputDropdownComponent implements OnInit, ControlValueAccessor {
   public onModelChange: Function = () => {};
 
   public onModelTouched: Function = () => {};
-
+*/
   bindScrollListener() {
     setTimeout(() => {
-      window.addEventListener('scroll', this.onScroll, true);
+      window.addEventListener("scroll", this.onScroll, true);
     }, 300);
   }
 
-  onScroll = (ev) => {
+  onScroll = ev => {
     if (
       !ev.target.className ||
-      ev.target.className !== 'p-multiselect-items-wrapper'
+      ev.target.className !== "p-multiselect-items-wrapper"
     ) {
       this.hide();
     }
   };
 
   unbindScrollListener() {
-    window.removeEventListener('scroll', this.onScroll, true);
+    window.removeEventListener("scroll", this.onScroll, true);
   }
+
   bindDocumentClickListener() {
     setTimeout(() => {
-      console.log('bind window click');
+      console.log("bind window click");
       if (!this.documentClickListener) {
         const documentTarget: any = this.el
           ? this.el.nativeElement.ownerDocument
-          : 'document';
+          : "document";
 
         this.documentClickListener = this.renderer.listen(
           documentTarget,
-          'click',
-          (event) => {
+          "click",
+          event => {
             if (this.isOutsideClicked(event)) {
               this.hide();
             }

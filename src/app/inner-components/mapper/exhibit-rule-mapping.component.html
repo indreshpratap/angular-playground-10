@@ -17,34 +17,36 @@
 		<tbody>
 			<!-- </ng-template>
 		<ng-template pTemplate="body" let-row let-rowIndex="rowIndex"> -->
-			<tr *ngFor="let row of mappedData.exhibitResponseRules;let rowIndex=index">
+			<tr *ngFor="let row of mappedData.exhibitResponseRules|nonDeleted;let rowIndex=index">
 				<td>
 					<table>
-						<tr *ngFor="let rule of row.exhibitResponseRuleMappings;let ruleIndex =index">
+						<tr *ngFor="let rule of row.exhibitResponseRuleMappings|nonDeleted;let ruleIndex =index">
 							<td class="wd-200x">
 								<span *ngIf="ruleIndex===0">
 									<rfo-multi-ddwl [options]="resDdwlList"
+                 
 										(selChange)="handleResChange($event,row,rowIndex)"
 										[value]="row.exhibitMappingValues|valueExtract:'name':true"
-										[defaultValue]="row.defaultRes" [ddwlRef]="resListDropdown" [key]="'name'"
-										[row]="row"></rfo-multi-ddwl>
+										[defaultValue]="row.defaultRes" [ddwlRef]="resListDropdown"
+									></rfo-multi-ddwl>
 								</span>
 							</td>
 							<td class="wd-200x">
 								<rfo-multi-ddwl [options]="ruleTypeList"
 									(selChange)="handleRuleTypeChange($event,rule,row.exhibitMappingValues)"
-									[value]="rule.exhibitResponseRuleId?[rule.exhibitResponseRuleId]:null" [row]="row"
-									[rule]="rule" [ddwlRef]="ruleTypeDropdown"></rfo-multi-ddwl>
+									[value]="rule.exhibitResponseRuleId?[rule.exhibitResponseRuleId]:null"
+									[ddwlRef]="ruleTypeDropdown"></rfo-multi-ddwl>
 							</td>
 							<td class="wd-200x">
-								<rfo-multi-ddwl [options]="productList"
+								<rfo-multi-ddwl [options]="productList" [allSelectedValue]="-1"
+									[filterByValues]="rule.productRuleMappings2|valueExtract:'productId':false"
 									[value]="rule.productRuleMappings1|valueExtract:'productId':false"
 									(selChange)="handleProduct1Change($event,rule,row)" [ddwlRef]="productDropdown">
 								</rfo-multi-ddwl>
 							</td>
 							<td class="wd-200x">
 								<rfo-multi-ddwl [options]="logicList" [allowClear]="true"
-									(selChange)="handleLogicChange($event,rule,row)"
+									(selChange)="handleLogicChange($event,rule,row)" [disabled]="rule.p2Disabled"
 									[value]="rule.exhibitResponseLogicId?[rule.exhibitResponseLogicId]:null"
 									[ddwlRef]="logicDropdown"></rfo-multi-ddwl>
 							</td>
@@ -52,12 +54,14 @@
 								<div class="last-row-wrap">
 									<div class="last-row">
 										<rfo-multi-ddwl [ddwlRef]="productDropdown" [allowClear]="true"
+											[allSelectedValue]="-1" [disabled]="rule.p2Disabled"
+											[filterByValues]="rule.productRuleMappings1|valueExtract:'productId':false"
 											[options]="productList" (selChange)="handleProduct2Change($event,rule,row)"
 											[value]="rule.productRuleMappings2|valueExtract:'productId':false">
 										</rfo-multi-ddwl>
 									</div>
 									<div>
-										<!-- <span (click)="deleteRule(row,ruleIndex)" class="pi pi-times"></span> -->
+										<span (click)="deleteRule(row,ruleIndex)" class="pi pi-times"></span>
 										<span (click)="deleteRule(row,ruleIndex)"
 											class="rfo-admin rfo-admin-delete"></span>
 									</div>
@@ -78,8 +82,9 @@
 	</table>
 	<!-- </ng-template> 
 		</p-table>-->
-	<input-dropdown #productDropdown [selectAllOption]="{value:-1,label:'All Product Selected'}" [options]="productList"
-		[filter]="true"></input-dropdown>
+	<input-dropdown #productDropdown [overrideOptions]="true"
+		[selectAllOption]="{value:-1,label:'All Product Selected'}" [options]="productList" [filter]="true">
+	</input-dropdown>
 	<input-dropdown #logicDropdown [multi]="false" [filter]="false" [options]="logicList"></input-dropdown>
 	<input-dropdown #ruleTypeDropdown [multi]="false" [filter]="false" [options]="ruleTypeList">
 	</input-dropdown>

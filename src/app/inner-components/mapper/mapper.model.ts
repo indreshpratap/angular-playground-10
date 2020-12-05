@@ -24,6 +24,7 @@ export interface RuleMapping {
   deleted?: boolean;
   invalidType?: InvalidType;
   isNew: boolean;
+  p2Disabled ?:boolean;
 }
 
 export interface ExhibitResponseRule {
@@ -33,5 +34,5 @@ export interface ExhibitResponseRule {
   exhibitResponseRuleMappings: RuleMapping[];
   deleted?: boolean;
   defaultRes:string;
-  defaultResIndex:number;
+  // defaultResIndex:number;
 }

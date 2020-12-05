@@ -22,7 +22,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
   @Input() mappedData: any;
 
   resDdwlList: Array<{ label: string; value: any }>;
-  ruleList: ExhibitResponseRule[];
   logicList = [
     { value: 1, label: "AND" },
     { value: 2, label: "OR" },
@@ -36,7 +35,7 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     },
     { value: 2, label: "Should not be applied if" }
   ];
-  private _mappingList: Array<{ id: string; default: boolean }>;
+  private _mappingList: Array<{ id: string; default: boolean; name: string }>;
 
   constructor() {}
 
@@ -68,23 +67,111 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     } else {
       const existing = this._mappingList[index];
       const newRes = this.mappedData.mappingValueList[index];
+      const duplicateEntry = this.mappedData.mappingValueList.filter(
+        f => f.id === newRes.id
+      ).length;
+      debugger;
+      if (duplicateEntry > 1) {
+        return; // duplicate entries found no operation
+      }
       if (existing.id !== newRes.id) {
-        this.patchExistingRuleAndRes(existing.id, newRes.id);
+        this.patchExistingResponseToNew(existing.id, newRes.id, index);
+        this._mappingList[index] = { ...newRes };
+        this.resDdwlList[index] = { label: newRes.id, value: newRes.id };
       }
     }
   }
-  // todo: fix delete
-  checkResDelete(index: number) {}
+
+  checkResDelete(index: number) {
+    const existing = this._mappingList[index];
+    this._mappingList.splice(index, 1);
+    this.resDdwlList.splice(index, 1);
+    let removeRowIndex = -1;
+    let rowIndex = -1;
+    for (let row of this.exhibitResponseRules) {
+         ++rowIndex;
+      // defaultRes check
+      if (row.defaultRes === existing.id) {
+        if (row.exhibitMappingValues.length === 1) {
+          // and single selection
+          if (!row.exhibitTemplateColumnId) {
+            // if new rule then mark for row removal
+            removeRowIndex = rowIndex;
+            // is new then remove it
+            break;
+          } else {
+            row.deleted = true; //if old then mark deleted
+            break;
+          }
+        } else if (row.exhibitMappingValues.length > 1) {
+          // if multiple res then
+          // mark for remove res and mark anyone of them as default res
+          row.exhibitMappingValues = row.exhibitMappingValues.filter(
+            f => f.id !== existing.id
+          );
+          row.defaultRes = row.exhibitMappingValues[0].id;
+        }
+      } else {
+        // non default res check
+        const eLen = row.exhibitMappingValues.length;
+        const newRes = row.exhibitMappingValues.filter(
+          f => f.id !== existing.id
+        );
+
+        // checking length if not same then response removed
+        if (eLen !== newRes.length) {
+          row.exhibitMappingValues = newRes;
+          break;
+        }
+      }
+   
+    }
+    if (removeRowIndex !== -1) {
+      this.mappedData.exhibitResponseRules.splice(removeRowIndex, 1);
+      
+    }
+    // to trigger nonDelete pipe
+    this.mappedData.exhibitResponseRules = [
+        ...this.mappedData.exhibitResponseRules
+      ];
+  }
 
   private setMappingList() {
     this._mappingList = this.mappedData.mappingValueList
-      ? [...this.mappedData.mappingValueList]
+      ? this.deepCopy(this.mappedData.mappingValueList)
       : [];
   }
 
-  addNewRule(row: ExhibitResponseRule) {
-    row.exhibitResponseRuleMappings.push(this.newRule());
+  deepCopy(obj: any) {
+    return JSON.parse(JSON.stringify(obj));
   }
+
+  // @Depreceted passed as parameter to get dynamic dropdowns
+  getAvailableResOptionsFn: Function = rowIndex => {
+    const data = this.exhibitResponseRules;
+    let allSelected = [];
+    data.forEach((v, pIndex) => {
+      if (pIndex !== rowIndex) {
+        allSelected = [
+          ...allSelected,
+          ...v.exhibitMappingValues.map(m => m.id)
+        ];
+      }
+      return this.resDdwlList.filter(r => allSelected.indexOf(r.value) === -1);
+    });
+  };
+
+  get exhibitResponseRules() {
+    return this.mappedData.exhibitResponseRules as Array<ExhibitResponseRule>;
+  }
+
+  addNewRule(row: ExhibitResponseRule) {
+    row.exhibitResponseRuleMappings = [
+      ...row.exhibitResponseRuleMappings,
+      this.newRule()
+    ];
+  }
+
   deleteRule(row: ExhibitResponseRule, index: number) {
     const rule = row.exhibitResponseRuleMappings[index];
     if (!rule.isNew) {
@@ -92,12 +179,20 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     } else {
       row.exhibitResponseRuleMappings.splice(index, 1);
     }
-    if (!row.exhibitResponseRuleMappings.length) {
+    const hasItem = row.exhibitResponseRuleMappings.filter(f => !f.deleted);
+    if (!hasItem || !row.exhibitResponseRuleMappings.length) {
       this.addNewRule(row); // adding a blank
+    } else {
+      row.exhibitResponseRuleMappings = [...row.exhibitResponseRuleMappings]; // triggers nonDeleted pipe
     }
   }
 
-  handleResChange(value: string[], row: ExhibitResponseRule, rowIndex: number) {
+  // @depreceted
+  handleResChangeOld(
+    value: string[],
+    row: ExhibitResponseRule,
+    rowIndex: number
+  ) {
     if (this.isListNotEmpty(row.exhibitMappingValues)) {
       const existing = [];
       // marking deleted
@@ -125,12 +220,61 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     console.log("row mapper", row.exhibitMappingValues);
   }
 
+  handleResChange(value: string[], row: ExhibitResponseRule, rowIndex: number) {
+    row.exhibitMappingValues = value.map(v => {
+      return {
+        name: v,
+        id: v,
+        deleted: false
+      };
+    });
+
+    this.findAndDeleteOrAddResponseRow(value, rowIndex);
+  }
+
+  findAndDeleteOrAddResponseRow(value: string[], currentRowIndex: number) {
+    let allSelected = [];
+    const data = this.exhibitResponseRules;
+    data.forEach((v, pIndex) => {
+      allSelected = [...allSelected, ...v.exhibitMappingValues.map(m => m.id)];
+      if (pIndex !== currentRowIndex) {
+        v.exhibitMappingValues.forEach(res => {
+          if (value.indexOf(res.id) !== -1) {
+            res.deleted = true;
+          }
+        });
+        // filtering non-deleted response
+        v.exhibitMappingValues = v.exhibitMappingValues.filter(m => !m.deleted);
+        if (!v.exhibitMappingValues.length) {
+          v.deleted = true;
+        }
+      }
+    });
+
+    this.mappedData.exhibitResponseRules = data.filter(
+      d => !(d.deleted && !d.exhibitTemplateColumnId)
+    );
+
+    this._mappingList.forEach(mp => {
+      if (allSelected.indexOf(mp.id) === -1) {
+        this.addResponseRule(mp.id);
+      }
+    });
+  }
+
   handleRuleTypeChange(value: number[], rule: RuleMapping, row) {
     this.validateDuplicateMapping(rule, row);
     rule.exhibitResponseRuleId = value[0];
   }
   handleProduct1Change(value: number[], rule: RuleMapping, row) {
     this.validateDuplicateMapping(rule, row);
+    if (this.isListNotEmpty(value) && value[0] === -1) {
+      rule.p2Disabled = true;
+      rule.productRuleMappings2 = [];
+      rule.exhibitResponseLogicId = null;
+    } else {
+      rule.p2Disabled = false;
+    }
     rule.productRuleMappings1 = this.isListNotEmpty(value)
       ? value.map(v => this.toMappedProduct(v))
       : [];
@@ -228,10 +372,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     console.log(this.mappedData.exhibitResponseRules);
   }
 
-  private clearResBasedOnSelection(value: string[], excludeIndex: number) {
-    // todo: clear Res mapping based on selection
-  }
-
   private setResListDdwl() {
     this.resDdwlList = this._mappingList.map(m => {
       return { label: m.id, value: m.id };
@@ -241,21 +381,22 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
   private addResAndRule(index) {
     const res = this.mappedData.mappingValueList[index];
     this.resDdwlList.push({ label: res.id, value: res.id });
-    this.addResponseRule(res.id, index);
+    this.addResponseRule(res.id);
   }
 
-  private addResponseRule(res: string, resIndex: number) {
-    this.mappedData.exhibitResponseRules.push(
-      this.newResRuleForRes(res, resIndex)
-    );
+  private addResponseRule(res: string) {
+    this.mappedData.exhibitResponseRules = [
+      ...this.mappedData.exhibitResponseRules,
+      this.newResRuleForRes(res)
+    ];
   }
 
-  private newResRuleForRes(res: string, resIndex: number): ExhibitResponseRule {
+  private newResRuleForRes(res: string): ExhibitResponseRule {
     const segment: ExhibitResponseRule = {
       deleted: false,
       exhibitTemplateColumnId: null,
       defaultRes: res,
-      defaultResIndex: resIndex,
+      //defaultResIndex: resIndex,
       exhibitMappingValues: [this.newResValue(res)],
       exhibitResponseRuleMappings: [this.newRule()]
     };
@@ -272,7 +413,7 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     if (this._mappingList && this._mappingList.length) {
       this._mappingList.forEach((m, i) => {
         // this.resDdwlList.push({ label: m.id, value: m.id });
-        this.addResponseRule(m.id, i);
+        this.addResponseRule(m.id);
       });
     }
   }
@@ -297,8 +438,30 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     // this.ruleList = [];
   }
 
-  private patchExistingRuleAndRes(oldRes: string, newRes: string) {
-    // todo
+  private patchExistingResponseToNew(
+    oldRes: string,
+    newRes: string,
+    index: number
+  ) {
+    for (let e of this.exhibitResponseRules) {
+      debugger;
+      if (e.defaultRes === oldRes) {
+        e.defaultRes = newRes;
+      }
+      let doBreak = false;
+      for (let r of e.exhibitMappingValues) {
+        if (r.id === oldRes) {
+          r.id = newRes;
+          r.name = newRes;
+          doBreak = true;
+          break;
+        }
+      }
+      if (doBreak) {
+        e.exhibitMappingValues = [...e.exhibitMappingValues]; // trigger changes
+        break; // breaking upper lopp
+      }
+    }
   }
 
   private isListNotEmpty(list: any[]) {

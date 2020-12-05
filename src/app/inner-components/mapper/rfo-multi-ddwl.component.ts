@@ -27,8 +27,6 @@ export class RfoMultiDdwlComponent implements OnInit, OnChanges {
   @Input() filterByValues = null;
   @Input() allowClear = false;
   @Input() allSelectedValue = null;
-  @Input() dynamicOptionsFunc: Function = null;
-  @Input() rowIndex: number;
 
   @Input() rule: any;
   @Input() placeholder;
@@ -66,9 +64,6 @@ export class RfoMultiDdwlComponent implements OnInit, OnChanges {
   }
 
   get getAvailableOptions() {
-    if (this.dynamicOptionsFunc) {
-      return this.dynamicOptionsFunc(this.rowIndex);
-    }
     if (this.filterByValues && this.filterByValues.length) {
       if (
         this.allSelectedValue !== null &&

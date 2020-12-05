@@ -24,7 +24,6 @@
 							<td class="wd-200x">
 								<span *ngIf="ruleIndex===0">
 									<rfo-multi-ddwl [options]="resDdwlList"
-                 
 										(selChange)="handleResChange($event,row,rowIndex)"
 										[value]="row.exhibitMappingValues|valueExtract:'name':true"
 										[defaultValue]="row.defaultRes" [ddwlRef]="resListDropdown"

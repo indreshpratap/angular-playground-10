@@ -6,11 +6,20 @@
   padding: 6px;
   color: #009697;
   background: #ecfaf3;
+  cursor: default;
   width: 100%;
   justify-content: space-between;
   .value-str {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+  }
+  .rfo-ddwl-right {
+    display: flex;
+    justify-content: flex-end;
+  }
+  &.ddwl-disabled {
+    border-color: lightgray;
+    cursor: not-allowed;
   }
 }

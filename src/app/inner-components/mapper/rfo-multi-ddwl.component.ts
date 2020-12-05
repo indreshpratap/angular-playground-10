@@ -1,30 +1,35 @@
 import {
-  AfterViewInit,
   Component,
   ElementRef,
   EventEmitter,
   HostListener,
   Input,
+  OnChanges,
   OnInit,
   Output,
-} from '@angular/core';
-import { InputDropdownComponent } from './input-dropdown.component';
+  SimpleChanges
+} from "@angular/core";
+import { InputDropdownComponent } from "./input-dropdown.component";
 
 @Component({
-  selector: 'rfo-multi-ddwl',
-  templateUrl: './rfo-multi-ddwl.component.html',
-  styleUrls: ['./rfo-multi-ddwl.component.scss'],
+  selector: "rfo-multi-ddwl",
+  templateUrl: "./rfo-multi-ddwl.component.html",
+  styleUrls: ["./rfo-multi-ddwl.component.scss"]
 })
-export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
+export class RfoMultiDdwlComponent implements OnInit, OnChanges {
   @Input() ddwlRef: InputDropdownComponent;
   ddwlData = {};
   valuesAsString = null;
   @Input() value = null;
+  @Input() disabled = false;
   @Input() defaultValue = null;
   @Input() options = [];
+  @Input() filterByValues = null;
   @Input() allowClear = false;
+  @Input() allSelectedValue = null;
+  @Input() dynamicOptionsFunc: Function = null;
+  @Input() rowIndex: number;
 
-  @Input() row: any;
   @Input() rule: any;
   @Input() placeholder;
   @Input() key: string;
@@ -32,23 +37,51 @@ export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
   @Output() selChange = new EventEmitter();
 
   constructor(private el: ElementRef) {}
-  ngAfterViewInit(): void {}
-
-  ngOnInit() {
-    this.updateLabel();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.disabled) {
+      this.updateLabel();
+    }
+    if (changes.value) {
+      this.updateLabel();
+    }
   }
 
-  @HostListener('click')
+  ngOnInit() {
+    // this.updateLabel();
+  }
+
+  @HostListener("click")
   clickListener() {
-    const re = this.el.nativeElement.getBoundingClientRect();
-    setTimeout(() => {
-      this.ddwlData = {
-        options: this.options,
-        value: this.value,
-        defaultValue: this.defaultValue,
-      };
-      this.ddwlRef.show(re, this.ddwlData, this.onChangeCallback);
-    }, 100);
+    if (!this.disabled) {
+      const re = this.el.nativeElement.getBoundingClientRect();
+      setTimeout(() => {
+        this.ddwlData = {
+          options: this.getAvailableOptions,
+          value: this.value,
+          defaultValue: this.defaultValue
+        };
+        this.ddwlRef.show(re, this.ddwlData, this.onChangeCallback);
+      }, 100);
+    }
+  }
+
+  get getAvailableOptions() {
+    if (this.dynamicOptionsFunc) {
+      return this.dynamicOptionsFunc(this.rowIndex);
+    }
+    if (this.filterByValues && this.filterByValues.length) {
+      if (
+        this.allSelectedValue !== null &&
+        this.filterByValues[0] === this.allSelectedValue
+      ) {
+        return this.options.filter(o => this.value.indexOf(o.value) !== -1);
+      }
+      return this.options.filter(
+        o => this.filterByValues.indexOf(o.value) === -1
+      );
+    } else {
+      return this.options;
+    }
   }
 
   clearSelection($event: MouseEvent) {
@@ -58,20 +91,24 @@ export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
     this.selChange.emit(this.value);
   }
 
-  onChangeCallback = (event) => {
+  onChangeCallback = event => {
     this.value = event.value;
-    this.updateLabel();
+    if (event.selectAll) {
+      this.valuesAsString = "All";
+    } else {
+      this.updateLabel();
+    }
     this.selChange.emit(this.value);
   };
 
   updateLabel() {
     if (this.value && this.options && this.value.length) {
-      let label = '';
+      let label = "";
       for (let i = 0; i < this.value.length; i++) {
         const itemLabel = this.findLabelByValue(this.value[i]);
         if (itemLabel) {
           if (label.length > 0) {
-            label = label + ', ';
+            label = label + ", ";
           }
           label = label + itemLabel;
         }
@@ -79,7 +116,7 @@ export class RfoMultiDdwlComponent implements OnInit, AfterViewInit {
 
       this.valuesAsString = label;
     } else {
-      this.valuesAsString = this.placeholder || 'Choose';
+      this.valuesAsString = this.placeholder || null;
     }
   }
 

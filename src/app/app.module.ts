@@ -11,6 +11,7 @@ import {
   DdwlSelectItem,
   InputDropdownComponent
 } from "./inner-components/mapper/input-dropdown.component";
+import { NonDeletedPipe } from './inner-components/mapper/non-deleted.pipe';
 
 @NgModule({
   imports: [BrowserModule, FormsModule],
@@ -21,7 +22,8 @@ import {
     RfoMultiDdwlComponent,
     InputDropdownComponent,
     DdwlSelectItem,
-    ValueExtractPipe
+    ValueExtractPipe,
+    NonDeletedPipe
   ],
   bootstrap: [AppComponent]
 })

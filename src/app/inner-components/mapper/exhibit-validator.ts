@@ -88,8 +88,6 @@ function runConflictAndDuplicateChecking(index: number, rules: RuleMapping[]) {
     if (hasError) {
       break;
     }
-    
-
   }
 }
 
@@ -216,7 +214,12 @@ function validateConflictingRuleSubset(r1: RuleMapping, r2: RuleMapping) {
     return;
   }
 
-  const hasError = validateConflictingRuleWhenORAndAND(r1, r2, productListR1,r1);
+  const hasError = validateConflictingRuleWhenORAndAND(
+    r1,
+    r2,
+    productListR1,
+    r1
+  );
   if (hasError) {
     return hasError;
   }
@@ -248,14 +251,14 @@ function validateConflictingRuleSubset(r1: RuleMapping, r2: RuleMapping) {
    * </p>
    */
 
-  validateConflictingRuleWhenORAndAND(r2, r1, productListR2,r1);
+  validateConflictingRuleWhenORAndAND(r2, r1, productListR2, r1);
 }
 
 function validateConflictingRuleWhenORAndAND(
   rulesToValidate: RuleMapping,
   oldRules: RuleMapping,
   rulesToValidateProductIds: number[],
-  errorMarker:RuleMapping
+  errorMarker: RuleMapping
 ) {
   if (
     rulesToValidate.exhibitResponseRuleId === 2 &&
@@ -268,23 +271,20 @@ function validateConflictingRuleWhenORAndAND(
       element => element.productId
     );
 
-    var arr = [];
-    var arr2 = [];
-    rulesToValidateProductIds.forEach(element => {
-      let testArr = productIds1.filter(item => item === element);
-      if (isListNotEmpty(testArr)) {
-        arr.push(...testArr);
-      }
+    let arr = productIds1.filter(
+      item => rulesToValidateProductIds.indexOf(item) !== -1
+    );
 
-      let testArr2 = productIds2.filter(item => item === element);
-      if (isListNotEmpty(testArr2)) {
-        arr2.push(...testArr2);
-      }
-    });
-  }
-  if (isListNotEmpty(arr) && isListNotEmpty(arr2)) {
-    errorMarker.errorMsg = RULE_ERROR[InvalidType.CONFLICT];
-    return true;
+    let arr2 = productIds2.filter(
+      item => rulesToValidateProductIds.indexOf(item) !== -1
+    );
+
+    if (isListNotEmpty(arr) && isListNotEmpty(arr2)) {
+      errorMarker.errorMsg = RULE_ERROR[InvalidType.CONFLICT];
+      return true;
+    } else {
+      return false;
+    }
   }
   return false;
 }

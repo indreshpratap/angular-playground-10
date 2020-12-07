@@ -237,7 +237,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     ruleIndex: number,
     row: ExhibitResponseRule
   ) {
-    // this.validateDuplicateMapping(rule, row.exhibitMappingValues);
     rule.exhibitResponseRuleId = value[0];
     runValidationOnChange(row, rule, ruleIndex);
   }
@@ -247,7 +246,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     ruleIndex: number,
     row: ExhibitResponseRule
   ) {
-    //  this.validateDuplicateMapping(rule, row);
     if (isListNotEmpty(value) && value[0] === -1) {
       rule.p2Disabled = true;
       this.clearP2AndLogic(rule);
@@ -257,8 +255,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     rule.productRuleMappings1 = isListNotEmpty(value)
       ? value.map(v => this.toMappedProduct(v))
       : [];
-    rule.p1SortedValue = value?value.sort():value;
-    rule.p1AsString = value?value.join():null;
     runValidationOnChange(row, rule, ruleIndex);
   }
   handleProduct2Change(
@@ -267,12 +263,9 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     ruleIndex: number,
     row: ExhibitResponseRule
   ) {
-    //this.validateDuplicateMapping(rule, row);
     rule.productRuleMappings2 = isListNotEmpty(value)
       ? value.map(v => this.toMappedProduct(v))
       : [];
-    rule.p2SortedValue = value?value.sort():value;
-    rule.p2AsString = value?value.join():null;
     runValidationOnChange(row, rule, ruleIndex);
   }
   handleLogicChange(
@@ -281,7 +274,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     ruleIndex: number,
     row: ExhibitResponseRule
   ) {
-    //  this.validateDuplicateMapping(rule, row);
     rule.exhibitResponseLogicId = value ? value[0] : null;
     runValidationOnChange(row, rule, ruleIndex);
   }
@@ -325,7 +317,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
       deleted: false,
       exhibitTemplateColumnId: null,
       defaultRes: res,
-      //defaultResIndex: resIndex,
       exhibitMappingValues: [this.newResValue(res)],
       exhibitResponseRuleMappings: [this.newRule()]
     };
@@ -341,7 +332,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     this.mappedData.exhibitResponseRules = [];
     if (this._mappingList && this._mappingList.length) {
       this._mappingList.forEach(m => {
-        // this.resDdwlList.push({ label: m.id, value: m.id });
         this.addResponseRule(m.id);
       });
     }
@@ -363,7 +353,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
   }
   private reset() {
     this.resDdwlList = [];
-    // this.ruleList = [];
   }
 
   private patchExistingResponseToNew(

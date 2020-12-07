@@ -3,6 +3,7 @@ import {
   Input,
   OnChanges,
   OnInit,
+  Output,
   SimpleChanges
 } from "@angular/core";
 import {
@@ -20,8 +21,10 @@ import {
 export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
   @Input() productList = [];
   @Input() mappedData: any;
+  @Output() saveDisable = false;
 
   resDdwlList: Array<{ label: string; value: any }>;
+  // ruleList: ExhibitResponseRule[];
   logicList = [
     { value: 1, label: "AND" },
     { value: 2, label: "OR" },
@@ -70,7 +73,7 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
       const duplicateEntry = this.mappedData.mappingValueList.filter(
         f => f.id === newRes.id
       ).length;
-      debugger;
+
       if (duplicateEntry > 1) {
         return; // duplicate entries found no operation
       }
@@ -89,7 +92,7 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     let removeRowIndex = -1;
     let rowIndex = -1;
     for (let row of this.exhibitResponseRules) {
-         ++rowIndex;
+      ++rowIndex;
       // defaultRes check
       if (row.defaultRes === existing.id) {
         if (row.exhibitMappingValues.length === 1) {
@@ -124,16 +127,14 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
           break;
         }
       }
-   
     }
     if (removeRowIndex !== -1) {
       this.mappedData.exhibitResponseRules.splice(removeRowIndex, 1);
-      
     }
     // to trigger nonDelete pipe
     this.mappedData.exhibitResponseRules = [
-        ...this.mappedData.exhibitResponseRules
-      ];
+      ...this.mappedData.exhibitResponseRules
+    ];
   }
 
   private setMappingList() {
@@ -366,7 +367,183 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     const conflicting = isRuleEqual && isProductsEqual;
   }
 
-  validateConflictingRuleSubset(ruleToValidate, oldRule) {}
+  validateConflictingRuleSubset(ruleToValidate, oldRule) {
+    if (
+      oldRule.exhibitResponseRuleId === ruleToValidate.exhibitResponseRuleId
+    ) {
+      return;
+    }
+
+    const productListRulesToValidate = this.getProductIdsOrOREmpty(
+      ruleToValidate
+    );
+    const productListOldRule = this.getProductIdsOrOREmpty(oldRule);
+
+    console.log("productListRulesToValidate=>", productListRulesToValidate);
+    console.log("productListOldRule=>", productListOldRule);
+    /**
+     * Handle following rules:
+     *
+     * <p>
+     * Rule 1 : SBA > P1,P2 OR P3
+     * <p>
+     * Rule 2 : SNBA > P2,P3
+     * </p>
+     *
+     * <p>
+     * Rule 1 : SNBA > P1 OR P3
+     * <p>
+     * Rule 2 : SBA > P1,P3 OR P2
+     * </p>
+     *
+     */
+
+    if (this.isListNotEmpty(productListRulesToValidate)) {
+      let arr = [];
+      productListRulesToValidate.forEach(element => {
+        let testArr = productListOldRule.filter(
+          item => item.productId === element.productId
+        );
+        if (this.isListNotEmpty(testArr)) {
+          arr.push(...testArr);
+        }
+      });
+      if (this.isListNotEmpty(arr)) {
+        const conflicting = true;
+        console.log("conflicting=>", conflicting);
+      }
+    }
+
+    /**
+     * Handle following rules:
+     *
+     * <p>
+     * Rule 1 : SBA > P1,P2 AND P3
+     * <p>
+     * Rule 2 : SNBA > P1,P2,P3
+     * </p>
+     *
+     * <p>
+     * Rule 1 : SBA > P1 AND P3
+     * <p>
+     * Rule 2 : SNBA > P1,P2,P3
+     * </p>
+     *
+     * <p>
+     * Rule 1 : SBA > P1,P2 AND P3
+     * <p>
+     * Rule 2 : SNBA > P2,P3
+     * </p>
+     *
+     * <p>
+     * Rule 1 : SBA > P1,P2,P4 AND P3,P5
+     * <p>
+     * Rule 2 : SNBA > P2,P3,P6
+     * </p>
+     */
+
+    if (
+      oldRule.exhibitResponseLogicId === ruleToValidate.exhibitResponseLogicId
+    )
+      return;
+
+    this.validateConflictingRuleWhenORAndAND(
+      ruleToValidate,
+      oldRule,
+      productListRulesToValidate
+    );
+
+    /**
+     * Handle following rules:
+     *
+     * <p>
+     * Rule 1 : SNBA > P1,P2,P3
+     * <p>
+     * Rule 2 : SBA > P1,P2 AND P3
+     * </p>
+     *
+     * <p>
+     * Rule 1 : SNBA > P1,P2,P3
+     * <p>
+     * Rule 2 : SBA > P1 AND P3
+     * </p>
+     *
+     * <p>
+     * Rule 1 : SNBA > P2,P3
+     * <p>
+     * Rule 2 : SBA > P1,P2 AND P3
+     * </p>
+     *
+     * <p>
+     * Rule 1 : SNBA > P2,P3,P6
+     * <p>
+     * Rule 2 : SBA > P1,P2,P4 AND P3,P5
+     * </p>
+     */
+    this.validateConflictingRuleWhenORAndAND(
+      oldRule,
+      ruleToValidate,
+      productListOldRule
+    );
+  }
+
+  validateConflictingRuleWhenORAndAND(
+    rulesToValidate,
+    oldRules,
+    rulesToValidateProductIds
+  ) {
+    if (
+      rulesToValidate.exhibitResponseRuleId === 2 &&
+      this.isListNotEmpty(rulesToValidate)
+    ) {
+      let productIds1 = oldRules.productRuleMappings1.filter(
+        element => element.productId
+      );
+      let productIds2 = oldRules.productRuleMappings2.filter(
+        element => element.productId
+      );
+
+      var arr = [];
+      var arr2 = [];
+      rulesToValidateProductIds.forEach(element => {
+        let testArr = productIds1.filter(item => item === element);
+        if (this.isListNotEmpty(testArr)) {
+          arr.push(...testArr);
+        }
+
+        let testArr2 = productIds2.filter(item => item === element);
+        if (this.isListNotEmpty(testArr2)) {
+          arr2.push(...testArr2);
+        }
+      });
+    }
+    if (this.isListNotEmpty(arr) && this.isListNotEmpty(arr2)) {
+      const conflicting = true;
+      console.log("conflicting=>", conflicting);
+    }
+  }
+
+  getProductIdsOrOREmpty(rule) {
+    let arr = [];
+    if (
+      rule.exhibitResponseRuleId === null ||
+      rule.exhibitResponseRuleId === 2
+    ) {
+      const arr1 = rule.productRuleMappings2.filter(
+        element => element.productId
+      );
+      const arr2 = rule.productRuleMappings1.filter(
+        element => element.productId
+      );
+      if (this.isListNotEmpty(arr1)) {
+        arr.push(arr1);
+      }
+      if (this.isListNotEmpty(arr2)) {
+        arr.push(arr2);
+      }
+    }
+    return arr;
+  }
 
   saveCheck() {
     console.log(this.mappedData.exhibitResponseRules);
@@ -411,7 +588,7 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     // this.reset();
     this.mappedData.exhibitResponseRules = [];
     if (this._mappingList && this._mappingList.length) {
-      this._mappingList.forEach((m, i) => {
+      this._mappingList.forEach(m => {
         // this.resDdwlList.push({ label: m.id, value: m.id });
         this.addResponseRule(m.id);
       });

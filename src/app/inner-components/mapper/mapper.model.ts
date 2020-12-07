@@ -23,13 +23,15 @@ export interface RuleMapping {
   productRuleMappings1: MappedProduct[];
   productRuleMappings2: MappedProduct[];
   deleted?: boolean;
-  invalidType?: InvalidType;
+  errorMsg?:string;
   isNew: boolean;
+// for ui only
   p2Disabled?: boolean;
   p1SortedValue?: number[];
   p1AsString?: string;
   p2SortedValue?: number[];
   p2AsString?: string;
+  combinedProducts?:number[]
 }
 
 export interface ExhibitResponseRule {

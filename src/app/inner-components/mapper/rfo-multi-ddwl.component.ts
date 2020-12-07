@@ -27,6 +27,7 @@ export class RfoMultiDdwlComponent implements OnInit, OnChanges {
   @Input() filterByValues = null;
   @Input() allowClear = false;
   @Input() allSelectedValue = null;
+  @Input() errorMsg:string = null;
 
   @Input() rule: any;
   @Input() placeholder;

@@ -22,4 +22,9 @@
     border-color: lightgray;
     cursor: not-allowed;
   }
+  &.invalid-rule {
+  border-color: #f57070;
+    background: #f7dbe0;
+    color: #f14b4b;
+}
 }

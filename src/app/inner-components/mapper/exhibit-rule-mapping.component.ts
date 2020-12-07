@@ -6,6 +6,7 @@ import {
   Output,
   SimpleChanges
 } from "@angular/core";
+import { isListNotEmpty, runValidationOnChange } from "./exhibit-validator";
 import {
   ExhibitResponseRule,
   MappedProduct,
@@ -46,7 +47,7 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     if (changes.mappedData && changes.mappedData.currentValue) {
       this.setMappingList();
       this.setResListDdwl();
-      if (!this.isListNotEmpty(this.mappedData.exhibitResponseRules)) {
+      if (!isListNotEmpty(this.mappedData.exhibitResponseRules)) {
         this.createRuleForEachRes();
       } else {
       }
@@ -188,39 +189,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     }
   }
 
-  // @depreceted
-  handleResChangeOld(
-    value: string[],
-    row: ExhibitResponseRule,
-    rowIndex: number
-  ) {
-    if (this.isListNotEmpty(row.exhibitMappingValues)) {
-      const existing = [];
-      // marking deleted
-      row.exhibitMappingValues.forEach(v => {
-        if (value.indexOf(v.name) === -1) {
-          v.deleted = true;
-        } else {
-          v.deleted = false;
-          existing.push(v.name);
-        }
-      });
-      const newMapping = value
-        .filter(v => existing.indexOf(v) === -1)
-        .map(m => this.newResValue(m));
-      row.exhibitMappingValues = [...row.exhibitMappingValues, ...newMapping];
-    } else {
-      row.exhibitMappingValues = value.map(v => {
-        return {
-          name: v,
-          id: v,
-          deleted: false
-        };
-      });
-    }
-    console.log("row mapper", row.exhibitMappingValues);
-  }
-
   handleResChange(value: string[], row: ExhibitResponseRule, rowIndex: number) {
     row.exhibitMappingValues = value.map(v => {
       return {
@@ -263,287 +231,71 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     });
   }
 
-  handleRuleTypeChange(value: number[], rule: RuleMapping, row) {
-    this.validateDuplicateMapping(rule, row);
+  handleRuleTypeChange(
+    value: number[],
+    rule: RuleMapping,
+    ruleIndex: number,
+    row: ExhibitResponseRule
+  ) {
+    // this.validateDuplicateMapping(rule, row.exhibitMappingValues);
     rule.exhibitResponseRuleId = value[0];
+    runValidationOnChange(row, rule, ruleIndex);
   }
-  handleProduct1Change(value: number[], rule: RuleMapping, row) {
-    this.validateDuplicateMapping(rule, row);
-    if (this.isListNotEmpty(value) && value[0] === -1) {
+  handleProduct1Change(
+    value: number[],
+    rule: RuleMapping,
+    ruleIndex: number,
+    row: ExhibitResponseRule
+  ) {
+    //  this.validateDuplicateMapping(rule, row);
+    if (isListNotEmpty(value) && value[0] === -1) {
       rule.p2Disabled = true;
-      rule.productRuleMappings2 = [];
-      rule.exhibitResponseLogicId = null;
+      this.clearP2AndLogic(rule);
     } else {
       rule.p2Disabled = false;
     }
-    rule.productRuleMappings1 = this.isListNotEmpty(value)
+    rule.productRuleMappings1 = isListNotEmpty(value)
       ? value.map(v => this.toMappedProduct(v))
       : [];
-    // todo: check for available product for p2 if not then disable both logic and p2
+    rule.p1SortedValue = value?value.sort():value;
+    rule.p1AsString = value?value.join():null;
+    runValidationOnChange(row, rule, ruleIndex);
   }
-  handleProduct2Change(value: number[], rule: RuleMapping, row) {
-    this.validateDuplicateMapping(rule, row);
-    rule.productRuleMappings2 = this.isListNotEmpty(value)
-      ? value.map(v => this.toMappedProduct(v))
-      : [];
-    // todo: filter the p1 dropdown based on p2 selection
-  }
-  handleLogicChange(value: number[], rule: RuleMapping, row) {
-    this.validateDuplicateMapping(rule, row);
-    rule.exhibitResponseLogicId = value ? value[0] : null;
-  }
-
-  validateDuplicateMapping(rule, row) {
-    let mappingObj = this.mappedData.exhibitResponseRules.filter(
-      arr => JSON.stringify(arr.exhibitMappingValues) === JSON.stringify(row)
-    );
-    if (this.isListNotEmpty(mappingObj)) {
-      this.validateConflictingOrDuplicateRule(
-        rule,
-        mappingObj[0].exhibitResponseRuleMappings
-      );
-    }
-  }
-
-  validateConflictingOrDuplicateRule(newRule, oldRules) {
-    oldRules.forEach(element => {
-      this.validateDuplicateRuleExactMatch(newRule, element);
-      this.validateConflictingRuleExactMatch(newRule, element);
-      this.validateConflictingRuleSubset(newRule, element);
-    });
-  }
-
-  validateDuplicateRuleExactMatch(ruleToValidate, oldRule) {
-    const isRuleEqual =
-      oldRule.exhibitResponseLogicId ===
-        ruleToValidate.exhibitResponseLogicId &&
-      ruleToValidate.exhibitResponseRuleId === oldRule.exhibitResponseRuleId;
-
-    const isProductsEqual =
-      (JSON.stringify(oldRule.productRuleMappings1) ===
-        JSON.stringify(ruleToValidate.productRuleMappings1) &&
-        JSON.stringify(oldRule.productRuleMappings2) ===
-          JSON.stringify(ruleToValidate.productRuleMappings2)) ||
-      (JSON.stringify(oldRule.productRuleMappings2) ===
-        JSON.stringify(ruleToValidate.productRuleMappings1) &&
-        JSON.stringify(oldRule.productRuleMappings1) ===
-          JSON.stringify(ruleToValidate.productRuleMappings2));
-
-    console.log(
-      "isRuleEqual=>",
-      isRuleEqual,
-      "isProductsEqual=>",
-      isProductsEqual
-    );
-    const duplicate = isRuleEqual && isProductsEqual;
-  }
-
-  validateConflictingRuleExactMatch(ruleToValidate, oldRule) {
-    if (
-      oldRule.exhibitResponseLogicId === ruleToValidate.exhibitResponseLogicId
-    ) {
-      return;
-    }
-
-    const isRuleEqual =
-      ruleToValidate.exhibitResponseRuleId === oldRule.exhibitResponseRuleId;
-
-    const isProductsEqual =
-      (JSON.stringify(oldRule.productRuleMappings1) ===
-        JSON.stringify(ruleToValidate.productRuleMappings1) &&
-        JSON.stringify(oldRule.productRuleMappings2) ===
-          JSON.stringify(ruleToValidate.productRuleMappings2)) ||
-      (JSON.stringify(oldRule.productRuleMappings2) ===
-        JSON.stringify(ruleToValidate.productRuleMappings1) &&
-        JSON.stringify(oldRule.productRuleMappings1) ===
-          JSON.stringify(ruleToValidate.productRuleMappings2));
-
-    console.log(
-      "isRuleEqual=>",
-      isRuleEqual,
-      "isProductsEqual=>",
-      isProductsEqual
-    );
-    const conflicting = isRuleEqual && isProductsEqual;
-  }
-
-  validateConflictingRuleSubset(ruleToValidate, oldRule) {
-    if (
-      oldRule.exhibitResponseRuleId === ruleToValidate.exhibitResponseRuleId
-    ) {
-      return;
-    }
-
-    const productListRulesToValidate = this.getProductIdsOrOREmpty(
-      ruleToValidate
-    );
-    const productListOldRule = this.getProductIdsOrOREmpty(oldRule);
-
-    console.log("productListRulesToValidate=>", productListRulesToValidate);
-    console.log("productListOldRule=>", productListOldRule);
-    /**
-     * Handle following rules:
-     *
-     * <p>
-     * Rule 1 : SBA > P1,P2 OR P3
-     * <p>
-     * Rule 2 : SNBA > P2,P3
-     * </p>
-     *
-     * <p>
-     * Rule 1 : SNBA > P1 OR P3
-     * <p>
-     * Rule 2 : SBA > P1,P3 OR P2
-     * </p>
-     *
-     */
-
-    if (this.isListNotEmpty(productListRulesToValidate)) {
-      let arr = [];
-      productListRulesToValidate.forEach(element => {
-        let testArr = productListOldRule.filter(
-          item => item.productId === element.productId
-        );
-        if (this.isListNotEmpty(testArr)) {
-          arr.push(...testArr);
-        }
-      });
-      if (this.isListNotEmpty(arr)) {
-        const conflicting = true;
-        console.log("conflicting=>", conflicting);
-      }
-    }
-
-    /**
-     * Handle following rules:
-     *
-     * <p>
-     * Rule 1 : SBA > P1,P2 AND P3
-     * <p>
-     * Rule 2 : SNBA > P1,P2,P3
-     * </p>
-     *
-     * <p>
-     * Rule 1 : SBA > P1 AND P3
-     * <p>
-     * Rule 2 : SNBA > P1,P2,P3
-     * </p>
-     *
-     * <p>
-     * Rule 1 : SBA > P1,P2 AND P3
-     * <p>
-     * Rule 2 : SNBA > P2,P3
-     * </p>
-     *
-     * <p>
-     * Rule 1 : SBA > P1,P2,P4 AND P3,P5
-     * <p>
-     * Rule 2 : SNBA > P2,P3,P6
-     * </p>
-     */
-
-    if (
-      oldRule.exhibitResponseLogicId === ruleToValidate.exhibitResponseLogicId
-    )
-      return;
-
-    this.validateConflictingRuleWhenORAndAND(
-      ruleToValidate,
-      oldRule,
-      productListRulesToValidate
-    );
-
-    /**
-     * Handle following rules:
-     *
-     * <p>
-     * Rule 1 : SNBA > P1,P2,P3
-     * <p>
-     * Rule 2 : SBA > P1,P2 AND P3
-     * </p>
-     *
-     * <p>
-     * Rule 1 : SNBA > P1,P2,P3
-     * <p>
-     * Rule 2 : SBA > P1 AND P3
-     * </p>
-     *
-     * <p>
-     * Rule 1 : SNBA > P2,P3
-     * <p>
-     * Rule 2 : SBA > P1,P2 AND P3
-     * </p>
-     *
-     * <p>
-     * Rule 1 : SNBA > P2,P3,P6
-     * <p>
-     * Rule 2 : SBA > P1,P2,P4 AND P3,P5
-     * </p>
-     */
-    this.validateConflictingRuleWhenORAndAND(
-      oldRule,
-      ruleToValidate,
-      productListOldRule
-    );
-  }
-
-  validateConflictingRuleWhenORAndAND(
-    rulesToValidate,
-    oldRules,
-    rulesToValidateProductIds
+  handleProduct2Change(
+    value: number[],
+    rule: RuleMapping,
+    ruleIndex: number,
+    row: ExhibitResponseRule
   ) {
-    if (
-      rulesToValidate.exhibitResponseRuleId === 2 &&
-      this.isListNotEmpty(rulesToValidate)
-    ) {
-      let productIds1 = oldRules.productRuleMappings1.filter(
-        element => element.productId
-      );
-      let productIds2 = oldRules.productRuleMappings2.filter(
-        element => element.productId
-      );
-
-      var arr = [];
-      var arr2 = [];
-      rulesToValidateProductIds.forEach(element => {
-        let testArr = productIds1.filter(item => item === element);
-        if (this.isListNotEmpty(testArr)) {
-          arr.push(...testArr);
-        }
-
-        let testArr2 = productIds2.filter(item => item === element);
-        if (this.isListNotEmpty(testArr2)) {
-          arr2.push(...testArr2);
-        }
-      });
-    }
-    if (this.isListNotEmpty(arr) && this.isListNotEmpty(arr2)) {
-      const conflicting = true;
-      console.log("conflicting=>", conflicting);
-    }
+    //this.validateDuplicateMapping(rule, row);
+    rule.productRuleMappings2 = isListNotEmpty(value)
+      ? value.map(v => this.toMappedProduct(v))
+      : [];
+    rule.p2SortedValue = value?value.sort():value;
+    rule.p2AsString = value?value.join():null;
+    runValidationOnChange(row, rule, ruleIndex);
+  }
+  handleLogicChange(
+    value: number[],
+    rule: RuleMapping,
+    ruleIndex: number,
+    row: ExhibitResponseRule
+  ) {
+    //  this.validateDuplicateMapping(rule, row);
+    rule.exhibitResponseLogicId = value ? value[0] : null;
+    runValidationOnChange(row, rule, ruleIndex);
   }
 
-  getProductIdsOrOREmpty(rule) {
-    let arr = [];
-    if (
-      rule.exhibitResponseRuleId === null ||
-      rule.exhibitResponseRuleId === 2
-    ) {
-      const arr1 = rule.productRuleMappings2.filter(
-        element => element.productId
-      );
-      const arr2 = rule.productRuleMappings1.filter(
-        element => element.productId
-      );
-      if (this.isListNotEmpty(arr1)) {
-        arr.push(arr1);
-      }
-      if (this.isListNotEmpty(arr2)) {
-        arr.push(arr2);
-      }
-    }
-    return arr;
+  clearP2AndLogic(rule: RuleMapping) {
+    rule.productRuleMappings2 = [];
+    rule.exhibitResponseLogicId = null;
+    rule.p2AsString = null;
+    rule.p2SortedValue = null;
   }
+
+  
+
+ 
 
   saveCheck() {
     console.log(this.mappedData.exhibitResponseRules);
@@ -603,7 +355,6 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
       exhibitResponseLogicId: null,
       productRuleMappings1: [],
       productRuleMappings2: [],
-      invalidType: null
     };
   }
 
@@ -641,7 +392,5 @@ export class ExhibitRuleMappingComponent implements OnInit, OnChanges {
     }
   }
 
-  private isListNotEmpty(list: any[]) {
-    return list && list.length;
-  }
+  
 }

@@ -1,4 +1,5 @@
 Rule checking engine logic
   1. "Required" check for product 1 value if ruleType selected.
   2. disable logic and p2 if all product selected
-  3. remove rule if no response mapping
+  3. remove rule if no response mapping,
+  4: check for validation for row if any rule deleted

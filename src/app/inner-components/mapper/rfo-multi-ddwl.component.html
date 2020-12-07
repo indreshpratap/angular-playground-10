@@ -1,6 +1,7 @@
-<div class="rfo-ddwl" [class.ddwl-disabled]="disabled">
-	<span class="value-str" [title]="valuesAsString">{{valuesAsString? valuesAsString:'Select' }}</span>
+<div class="rfo-ddwl" [class.ddwl-disabled]="disabled" [class.invalid-rule]="errorMsg">
+	<span class="value-str" [title]="valuesAsString|''">{{valuesAsString? valuesAsString:'Select' }}</span>
 	<div class="rfo-ddwl-right">
+		<span class="pi pi-exclamation-circle" *ngIf="errorMsg" [title]="errorMsg"></span>
 		<span class="pi pi-times" *ngIf="allowClear && valuesAsString" (click)="clearSelection($event)"></span>
 		<span class="ui-multiselect-trigger-icon ui-clickable pi pi-angle-down"></span>
 	</div>

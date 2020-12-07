@@ -32,7 +32,8 @@
 							</td>
 							<td class="wd-200x">
 								<rfo-multi-ddwl [options]="ruleTypeList"
-									(selChange)="handleRuleTypeChange($event,rule,row.exhibitMappingValues)"
+									(selChange)="handleRuleTypeChange($event,rule,ruleIndex,row)"
+                   [errorMsg]="rule.errorMsg"
 									[value]="rule.exhibitResponseRuleId?[rule.exhibitResponseRuleId]:null"
 									[ddwlRef]="ruleTypeDropdown"></rfo-multi-ddwl>
 							</td>
@@ -40,12 +41,14 @@
 								<rfo-multi-ddwl [options]="productList" [allSelectedValue]="-1"
 									[filterByValues]="rule.productRuleMappings2|valueExtract:'productId':false"
 									[value]="rule.productRuleMappings1|valueExtract:'productId':false"
-									(selChange)="handleProduct1Change($event,rule,row)" [ddwlRef]="productDropdown">
+                   [errorMsg]="rule.errorMsg"
+									(selChange)="handleProduct1Change($event,rule,ruleIndex,row)" [ddwlRef]="productDropdown">
 								</rfo-multi-ddwl>
 							</td>
 							<td class="wd-200x">
 								<rfo-multi-ddwl [options]="logicList" [allowClear]="true"
-									(selChange)="handleLogicChange($event,rule,row)" [disabled]="rule.p2Disabled"
+									(selChange)="handleLogicChange($event,rule,ruleIndex,row)" [disabled]="rule.p2Disabled"
+                   [errorMsg]="rule.errorMsg"
 									[value]="rule.exhibitResponseLogicId?[rule.exhibitResponseLogicId]:null"
 									[ddwlRef]="logicDropdown"></rfo-multi-ddwl>
 							</td>
@@ -54,8 +57,9 @@
 									<div class="last-row">
 										<rfo-multi-ddwl [ddwlRef]="productDropdown" [allowClear]="true"
 											[allSelectedValue]="-1" [disabled]="rule.p2Disabled"
+                      [errorMsg]="rule.errorMsg"
 											[filterByValues]="rule.productRuleMappings1|valueExtract:'productId':false"
-											[options]="productList" (selChange)="handleProduct2Change($event,rule,row)"
+											[options]="productList" (selChange)="handleProduct2Change($event,rule,ruleIndex,row)"
 											[value]="rule.productRuleMappings2|valueExtract:'productId':false">
 										</rfo-multi-ddwl>
 									</div>

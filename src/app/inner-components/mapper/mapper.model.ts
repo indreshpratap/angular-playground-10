@@ -1,6 +1,7 @@
 export enum InvalidType {
   DUPLICATE = 1,
-  CONFLICT = 2
+  CONFLICT = 2,
+  REQUIRED = 3
 }
 export interface ResponseValue {
   deleted?: boolean;
@@ -24,7 +25,11 @@ export interface RuleMapping {
   deleted?: boolean;
   invalidType?: InvalidType;
   isNew: boolean;
-  p2Disabled ?:boolean;
+  p2Disabled?: boolean;
+  p1SortedValue?: number[];
+  p1AsString?: string;
+  p2SortedValue?: number[];
+  p2AsString?: string;
 }
 
 export interface ExhibitResponseRule {
@@ -33,6 +38,6 @@ export interface ExhibitResponseRule {
   exhibitMappingValues: ResponseValue[];
   exhibitResponseRuleMappings: RuleMapping[];
   deleted?: boolean;
-  defaultRes:string;
+  defaultRes: string;
   // defaultResIndex:number;
 }
